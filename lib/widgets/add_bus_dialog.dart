@@ -25,7 +25,7 @@ class _AddBusDialogState extends ConsumerState<AddBusDialog> {
         return Colors.green;
       case BusType.big:
         return Colors.blue;
-      case BusType.tour:
+      case BusType.tourist:
         return Colors.yellow;
     }
   }

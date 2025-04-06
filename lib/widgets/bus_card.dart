@@ -1,10 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/bus.dart';
+import '../providers/bus_provider.dart';
+import '../providers/driver_provider.dart';
+import 'schedule_item.dart';
+import 'add_schedule_dialog.dart';
 
-class BusCard extends StatelessWidget {
+class BusCard extends ConsumerStatefulWidget {
   final Bus bus;
 
   const BusCard({super.key, required this.bus});
+
+  @override
+  ConsumerState<BusCard> createState() => _BusCardState();
+}
+
+class _BusCardState extends ConsumerState<BusCard> {
+  bool _isExpanded = false;
 
   String _getStatusText(BusStatus status) {
     switch (status) {
@@ -23,47 +35,37 @@ class BusCard extends StatelessWidget {
         return 'Малый';
       case BusType.big:
         return 'Большой';
-      case BusType.tour:
+      case BusType.tourist:
         return 'Туристический';
     }
+  }
+
+  void _addSchedule() {
+    showDialog(
+      context: context,
+      builder: (context) => AddScheduleDialog(bus: widget.bus),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.directions_bus,
-                  color: Color(bus.colorCode),
-                  size: 32,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${bus.brand} ${bus.model}',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      Text(
-                        bus.plateNumber,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+      child: Column(
+        children: [
+          ListTile(
+            leading: Icon(
+              Icons.directions_bus,
+              color: Color(widget.bus.colorCode),
+              size: 32,
             ),
-            const SizedBox(height: 8),
-            Row(
+            title: Text(
+              '${widget.bus.brand} ${widget.bus.model}',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            subtitle: Text(widget.bus.plateNumber),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -74,7 +76,7 @@ class BusCard extends StatelessWidget {
                     color: Colors.grey[200],
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: Text(_getTypeText(bus.type)),
+                  child: Text(_getTypeText(widget.bus.type)),
                 ),
                 const SizedBox(width: 8),
                 Container(
@@ -86,12 +88,54 @@ class BusCard extends StatelessWidget {
                     color: Colors.grey[200],
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: Text(_getStatusText(bus.status)),
+                  child: Text(_getStatusText(widget.bus.status)),
+                ),
+                IconButton(
+                  icon: Icon(
+                    _isExpanded ? Icons.expand_less : Icons.expand_more,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _isExpanded = !_isExpanded;
+                    });
+                  },
                 ),
               ],
             ),
+          ),
+          if (_isExpanded) ...[
+            const Divider(),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Расписание',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.add),
+                        onPressed: _addSchedule,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  ...widget.bus.schedules.map((schedule) => ScheduleItem(
+                        schedule: schedule,
+                        busId: widget.bus.id,
+                      )),
+                ],
+              ),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }

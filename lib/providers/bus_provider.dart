@@ -22,4 +22,27 @@ class BusList extends _$BusList {
         .collection('Buses')
         .add(bus.toMap());
   }
+
+  Future<void> updateBusSchedule(String busId, List<BusSchedule> schedules) async {
+    await FirebaseFirestore.instance
+        .collection('Buses')
+        .doc(busId)
+        .update({
+          'schedules': schedules.map((s) => s.toMap()).toList(),
+        });
+  }
+
+  Future<void> addSchedule(String busId, BusSchedule schedule) async {
+    final busDoc = await FirebaseFirestore.instance
+        .collection('Buses')
+        .doc(busId)
+        .get();
+    
+    if (!busDoc.exists) return;
+
+    final bus = Bus.fromFirestore(busDoc);
+    final updatedSchedules = [...bus.schedules, schedule];
+
+    await updateBusSchedule(busId, updatedSchedules);
+  }
 } 
